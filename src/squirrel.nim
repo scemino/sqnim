@@ -81,6 +81,7 @@ const
 type
   PrintCallback = proc (v: HSQUIRRELVM, s: cstring) {.cdecl, varargs.}
   SQFUNCTION* = proc (v: HSQUIRRELVM): SQInteger {.cdecl.}
+  SQCOMPILERERROR* = proc (v: HSQUIRRELVM, desc: SQString, source: SQString, line: SQInteger, column: SQInteger) {.cdecl.}
   SQLEXREADFUNC* = proc (p: SQUserPointer): SQInteger {.cdecl.}
   HSQUIRRELVM* = pointer
   SQUserPointer* = pointer
@@ -140,6 +141,7 @@ proc sq_newthread*(friendvm: HSQUIRRELVM, initialstacksize: SQInteger): HSQUIRRE
 proc sq_seterrorhandler*(v: HSQUIRRELVM) {.importc: "sq_seterrorhandler".}
 proc sq_close*(v: HSQUIRRELVM) {.importc: "sq_close".}
 proc sq_setforeignptr*(v: HSQUIRRELVM, p: SQUserPointer) {.importc: "sq_setforeignptr".}
+proc sq_getforeignptr*(v: HSQUIRRELVM): SQUserPointer {.importc: "sq_getforeignptr".}
 proc sq_setprintfunc*(v: HSQUIRRELVM, printfunc, errfunc: PrintCallback) {.importc: "sq_setprintfunc".}
 proc sq_suspendvm*(v: HSQUIRRELVM): SQRESULT {.importc: "sq_suspendvm".}
 proc sq_wakeupvm*(v: HSQUIRRELVM, resumedret, retval, raiseerror, throwerror: SQBool): SQRESULT {.importc: "sq_wakeupvm".}
@@ -150,6 +152,8 @@ proc sq_getversion*(): SQInteger {.importc: "sq_getversion".}
 proc sq_compile*(v: HSQUIRRELVM, read: SQLEXREADFUNC, p: SQUserPointer, sourcename: cstring, raiseerror: SQBool): SQRESULT {.importc: "sq_compile".}
 proc sq_compilebuffer*(v: HSQUIRRELVM, s: cstring, size: SQInteger, sourcename: cstring, raiseerror: SQBool): SQRESULT {.importc: "sq_compilebuffer".}
 proc sq_enabledebuginfo*(v: HSQUIRRELVM, enable: SQBool) {.importc: "sq_enabledebuginfo".}
+proc sq_notifyallexceptions*(v: HSQUIRRELVM, enable: SQBool) {.importc: "sq_notifyallexceptions".}
+proc sq_setcompilererrorhandler*(v: HSQUIRRELVM, f: SQCOMPILERERROR) {.importc: "sq_setcompilererrorhandler".}
 
 # stack operations
 proc sq_push*(v: HSQUIRRELVM, idx: SQInteger) {.importc: "sq_push".}
@@ -203,10 +207,16 @@ proc sq_addref*(v: HSQUIRRELVM, po: var HSQOBJECT) {.importc: "sq_addref".}
 proc sq_resetobject*(po: var HSQOBJECT) {.importc: "sq_resetobject".}
 
 # register methods
+proc sqstd_register_bloblib*(v: HSQUIRRELVM) {.importc: "sqstd_register_bloblib".}
+proc sqstd_register_iolib*(v: HSQUIRRELVM) {.importc: "sqstd_register_iolib".}
+proc sqstd_register_mathlib*(v: HSQUIRRELVM) {.importc: "sqstd_register_mathlib".}
+proc sqstd_register_stringlib*(v: HSQUIRRELVM) {.importc: "sqstd_register_stringlib".}
 proc sqstd_register_systemlib*(v: HSQUIRRELVM) {.importc: "sqstd_register_systemlib".}
 
 # compiler helpers
+proc sqstd_loadfile*(v: HSQUIRRELVM, filename: cstring, printerror: bool): SQRESULT {.importc: "sqstd_loadfile".}
 proc sqstd_dofile*(v: HSQUIRRELVM, filename: cstring, retval, printerror: bool): SQRESULT {.importc: "sqstd_dofile".}
+proc sqstd_writeclosuretofile*(v: HSQUIRRELVM, filename: cstring): SQRESULT {.importc: "sqstd_writeclosuretofile".}
 
 # aux
 proc sqstd_seterrorhandlers*(v: HSQUIRRELVM) {.importc: "sqstd_seterrorhandlers".}
