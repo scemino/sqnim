@@ -26,13 +26,13 @@ proc execute*(v: HSQUIRRELVM; code: string; name = "Script"; raiseError = true):
   sq_addref(v, result)
   sq_settop(v, top)
 
-proc pushValue(v: HSQUIRRELVM, value: SQInteger) =
+proc pushValue*(v: HSQUIRRELVM, value: SQInteger) =
   sq_pushinteger(v, value)
 
-proc pushValue(v: HSQUIRRELVM, value: cstring) =
+proc pushValue*(v: HSQUIRRELVM, value: cstring) =
   sq_pushstring(v, value, value.len)
 
-proc pushValue(v: HSQUIRRELVM, value: SQFloat) =
+proc pushValue*(v: HSQUIRRELVM, value: SQFloat) =
   sq_pushfloat(v, value)
 
 proc getValue(v: HSQUIRRELVM, idx: SQInteger, i: SQInteger): SQInteger =
@@ -106,55 +106,67 @@ proc newTable*(v: VM): Table =
 
 macro sqBind*(vm, body): untyped =
   result = newStmtList()
-  for procDef in body:
-    let name = procDef[0]
-    var stmts = newStmtList()
-    procDef.expectMinLen(4)
-    var params: seq[NimNode]
-    for iParam in 1..procDef[3].len-1:
-      # tranform each param in squirrel param
-      let paramNode = procDef[3][iParam]
-      let identNode = paramNode[0]
-      let typeNode = paramNode[1]
-      params.add(identNode)
+  for bodyStmt in body:
+    if bodyStmt.kind == nnkConstSection:
+      let constSection = bodyStmt
+      for constDef in constSection:
+        let constName = constDef[0]
+        let constValue = constDef[2]
+        result.add(newCall(ident("sq_pushconsttable"), ident("v")))
+        result.add(newCall(ident("sq_pushstring"), ident("v"), newStrLitNode(constName.repr), newLit(-1)))
+        result.add(newCall(ident("pushValue"), ident("v"), constValue))
+        result.add(newNimNode(nnkDiscardStmt).add(newCall(ident("sq_newslot"), ident("v"), newLit(-3), newLit(SQTrue))))
+        result.add(newCall(ident("sq_pop"), ident("v"), newLit(1)))
+    else:
+      let procDef = bodyStmt
+      let name = procDef[0]
+      var stmts = newStmtList()
+      procDef.expectMinLen(4)
+      var params: seq[NimNode]
+      for iParam in 1..procDef[3].len-1:
+        # tranform each param in squirrel param
+        let paramNode = procDef[3][iParam]
+        let identNode = paramNode[0]
+        let typeNode = paramNode[1]
+        params.add(identNode)
 
+        var stmt: NimNode
+        case typeNode.repr:
+        of "SQInteger":
+          stmt = newCall(ident("sq_getinteger"), ident("v"), newLit(iParam+1), identNode)
+        of "SQFloat":
+          stmt = newCall(ident("sq_getfloat"), ident("v"), newLit(iParam+1), identNode)
+        of "SQString":
+          stmt = newCall(ident("sq_getstring"), ident("v"), newLit(iParam+1), identNode)
+        of "HSQOBJECT":
+          stmt = newCall(ident("sq_getstackobj"), ident("v"), newLit(iParam+1), identNode)
+        else:
+          assert false, "unexpected param type: " & typeNode.repr
+        stmts.add(newNimNode(nnkVarSection).add(newIdentDefs(identNode, typeNode)))
+        stmts.add(newNimNode(nnkDiscardStmt).add(stmt))
+      # result
+      let resultType = procDef[3][0]
       var stmt: NimNode
-      case typeNode.repr:
-      of "SQInteger":
-        stmt = newCall(ident("sq_getinteger"), ident("v"), newLit(iParam+1), identNode)
-      of "SQFloat":
-        stmt = newCall(ident("sq_getfloat"), ident("v"), newLit(iParam+1), identNode)
-      of "SQString":
-        stmt = newCall(ident("sq_getstring"), ident("v"), newLit(iParam+1), identNode)
-      of "HSQOBJECT":
-        stmt = newCall(ident("sq_getstackobj"), ident("v"), newLit(iParam+1), identNode)
-      else:
-        assert false, "unexpected param type: " & typeNode.repr
-      stmts.add(newNimNode(nnkVarSection).add(newIdentDefs(identNode, typeNode)))
-      stmts.add(newNimNode(nnkDiscardStmt).add(stmt))
-    # result
-    let resultType = procDef[3][0]
-    var stmt: NimNode
-    case resultType.repr:
-      of "SQInteger":
-        stmt = newCall(ident("sq_pushinteger"), ident("v"), newCall(name, params))
-      of "SQFloat":
-        stmt = newCall(ident("sq_pushfloat"), ident("v"), newCall(name, params))
-      of "SQString":
-        stmt = newCall(ident("sq_pushstring"), ident("v"), newCall(name, params), newLit(-1))
-      of "HSQOBJECT":
-        stmt = newCall(ident("sq_pushobject"), ident("v"), newCall(name, params))
-      of "":
-        stmt = newEmptyNode()
-      else:
-        assert false, "unexpected result type: " & resultType.repr
-    stmts.add(stmt)
-    stmts.add(newLit(1))
-    # create procedures
-    let sqbdName = ident("sqbd_" & name.repr)
-    let regStmt = newCall(ident("regGblFun"), ident("v"), sqbdName, newLit(name.repr))
-    result.add(procDef)
-    result.add(newProc(sqbdName, 
-      [ident("SQInteger"), newIdentDefs(ident("v"), ident("HSQUIRRELVM"))],
-      stmts, pragmas = newNimNode(nnkPragma).add(ident("cdecl"))))
-    result.add(regStmt)
+      case resultType.repr:
+        of "SQInteger":
+          stmt = newCall(ident("sq_pushinteger"), ident("v"), newCall(name, params))
+        of "SQFloat":
+          stmt = newCall(ident("sq_pushfloat"), ident("v"), newCall(name, params))
+        of "SQString":
+          stmt = newCall(ident("sq_pushstring"), ident("v"), newCall(name, params), newLit(-1))
+        of "HSQOBJECT":
+          stmt = newCall(ident("sq_pushobject"), ident("v"), newCall(name, params))
+        of "":
+          stmt = newEmptyNode()
+        else:
+          assert false, "unexpected result type: " & resultType.repr
+      stmts.add(stmt)
+      stmts.add(newLit(1))
+      # create procedures
+      let sqbdName = ident("sqbd_" & name.repr)
+      let regStmt = newCall(ident("regGblFun"), ident("v"), sqbdName, newLit(name.repr))
+      result.add(procDef)
+      result.add(newProc(sqbdName, 
+        [ident("SQInteger"), newIdentDefs(ident("v"), ident("HSQUIRRELVM"))],
+        stmts, pragmas = newNimNode(nnkPragma).add(ident("cdecl"))))
+      result.add(regStmt)

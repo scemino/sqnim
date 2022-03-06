@@ -89,8 +89,14 @@ test "test simple data":
 test "test bindings":
   let v = sq_open(1024)
   v.sqBind:
+    const
+      ANSWERTOUNIVERSE = 42
+      YES = 1
+      NO = 0
+
     proc add(x: SQInteger, y: SQInteger): SQInteger =
       x + y
+      
     proc addStr(x: SQString, y: SQString): SQString =
       ($x & $y).SQString
 
@@ -109,5 +115,12 @@ test "test bindings":
   var s: SQString
   discard sq_getstring(v, -1, s)
   doAssert s == "hello world"
+
+  result = execute(v, "return ANSWERTOUNIVERSE")
+  doAssert sq_isinteger(result)
+  sq_pushroottable(v)
+  sq_pushobject(v, result)
+  discard sq_getinteger(v, -1, i)
+  doAssert i == 42
 
   sq_close(v)
