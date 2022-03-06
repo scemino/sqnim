@@ -57,6 +57,8 @@ const
   SQOBJECT_CANBEFALSE     =0x01000000
   SQTrue* = true
   SQFalse* = false
+  SQ_OK* = 0
+  SQ_ERROR* = -1
   OT_NULL* =           (RT_NULL or SQOBJECT_CANBEFALSE).SQObjectType
   OT_INTEGER* =        (RT_INTEGER or SQOBJECT_NUMERIC or SQOBJECT_CANBEFALSE).SQObjectType
   OT_FLOAT* =          (RT_FLOAT or SQOBJECT_NUMERIC or SQOBJECT_CANBEFALSE).SQObjectType
@@ -83,9 +85,10 @@ type
   HSQUIRRELVM* = pointer
   SQUserPointer* = pointer
   SQInteger* = int
-  SQFloat* = float32
-  SQUnsignedInteger* = uint
-  SQRESULT* = int
+  SQFloat* = cfloat
+  SQString* = cstring
+  SQUnsignedInteger* = cuint
+  SQRESULT* = cint
   SQBool* = bool
   SQObjectValue* {.final, union, pure.} = object
     pTable*: pointer
@@ -106,7 +109,7 @@ type
     pClass*: pointer
     pInstance*: pointer
     pWeakRef*: pointer
-    raw*: int
+    raw*: SQInteger
   HSQOBJECT* = object
     objType*: SQObjectType
     value*: SQObjectValue
@@ -132,7 +135,7 @@ proc sq_isbool*(o: HSQOBJECT): bool {.inline.} = o.objType == OT_BOOL
 proc sq_isweakref*(o: HSQOBJECT): bool {.inline.} = o.objType == OT_WEAKREF
 
 # vm
-proc sq_open*(initialstacksize: int): HSQUIRRELVM {.importc: "sq_open".}
+proc sq_open*(initialstacksize: SQInteger): HSQUIRRELVM {.importc: "sq_open".}
 proc sq_newthread*(friendvm: HSQUIRRELVM, initialstacksize: SQInteger): HSQUIRRELVM {.importc: "sq_newthread".}
 proc sq_seterrorhandler*(v: HSQUIRRELVM) {.importc: "sq_seterrorhandler".}
 proc sq_close*(v: HSQUIRRELVM) {.importc: "sq_close".}
@@ -150,7 +153,7 @@ proc sq_enabledebuginfo*(v: HSQUIRRELVM, enable: SQBool) {.importc: "sq_enablede
 
 # stack operations
 proc sq_push*(v: HSQUIRRELVM, idx: SQInteger) {.importc: "sq_push".}
-proc sq_pop*(v: HSQUIRRELVM, nelemstopop: int) {.importc: "sq_pop".}
+proc sq_pop*(v: HSQUIRRELVM, nelemstopop: SQInteger) {.importc: "sq_pop".}
 proc sq_poptop*(v: HSQUIRRELVM) {.importc: "sq_poptop".}
 proc sq_remove*(v: HSQUIRRELVM, idx: SQInteger) {.importc: "sq_remove".}
 proc sq_gettop*(v: HSQUIRRELVM): SQInteger {.importc: "sq_gettop".}
@@ -167,15 +170,15 @@ proc sq_setparamscheck*(v: HSQUIRRELVM, nparamscheck: SQInteger, typemask: cstri
 proc sq_bindenv*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_bindenv".}
 proc sq_setclosureroot*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_setclosureroot".}
 proc sq_getclosureroot*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_getclosureroot".}
-proc sq_pushstring*(v: HSQUIRRELVM, s: cstring, len: int) {.importc: "sq_pushstring".}
+proc sq_pushstring*(v: HSQUIRRELVM, s: cstring, len: SQInteger) {.importc: "sq_pushstring".}
 proc sq_pushfloat*(v: HSQUIRRELVM, f: float) {.importc: "sq_pushfloat".}
-proc sq_pushinteger*(v: HSQUIRRELVM, n: int) {.importc: "sq_pushinteger".}
+proc sq_pushinteger*(v: HSQUIRRELVM, n: SQInteger) {.importc: "sq_pushinteger".}
 proc sq_pushnull*(v: HSQUIRRELVM) {.importc: "sq_pushnull".}
 proc sq_pushthread*(v: HSQUIRRELVM, thread: HSQUIRRELVM) {.importc: "sq_pushthread".}
 proc sq_gettype*(v: HSQUIRRELVM, idx: SQInteger): SQObjectType {.importc: "sq_gettype".}
 proc sq_getstring*(v: HSQUIRRELVM, idx: SQInteger, c: var cstring): SQRESULT {.importc: "sq_getstring".}
-proc sq_getinteger*(v: HSQUIRRELVM, idx: int, i: var int): SQRESULT {.importc: "sq_getinteger".}
-proc sq_getfloat*(v: HSQUIRRELVM, idx: int, i: var SQFloat): SQRESULT {.importc: "sq_getfloat".}
+proc sq_getinteger*(v: HSQUIRRELVM, idx: SQInteger, i: var SQInteger): SQRESULT {.importc: "sq_getinteger".}
+proc sq_getfloat*(v: HSQUIRRELVM, idx: SQInteger, i: var SQFloat): SQRESULT {.importc: "sq_getfloat".}
 proc sq_getclosureinfo*(v: HSQUIRRELVM, idx: SQInteger,nparams, nfreevars: var SQInteger): SQRESULT {.importc: "sq_getclosureinfo".}
 
 # object manipulation
@@ -190,7 +193,7 @@ proc sq_get*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_get".}
 proc sq_next*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_next".}
 
 # calls
-proc sq_call*(v: HSQUIRRELVM, params: int, retval, raiseerror: bool): SQRESULT {.importc: "sq_call".}
+proc sq_call*(v: HSQUIRRELVM, params: SQInteger, retval, raiseerror: bool): SQRESULT {.importc: "sq_call".}
 proc sq_throwerror*(v: HSQUIRRELVM, err: cstring): SQRESULT {.importc: "sq_throwerror".}
 
 # raw object handling
