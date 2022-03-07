@@ -1,5 +1,5 @@
 import unittest
-import squirrel
+import sqnim
 import std/[math, tables]
 
 test "test simple data":
@@ -96,7 +96,7 @@ test "test bindings":
 
     proc add(x: SQInteger, y: SQInteger): SQInteger =
       x + y
-      
+
     proc addStr(x: SQString, y: SQString): SQString =
       ($x & $y).SQString
 

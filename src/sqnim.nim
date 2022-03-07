@@ -227,4 +227,4 @@ proc printfunc*(v: HSQUIRRELVM, s: cstring) {.importc: "printfunc", cdecl, varar
 proc SQ_FAILED*(res: SQInteger): bool {.inline.} = res < 0
 proc SQ_SUCCEEDED*(res: SQInteger): bool {.inline.} = res >= 0
 
-include squirrel/util
+include sqnim/util
