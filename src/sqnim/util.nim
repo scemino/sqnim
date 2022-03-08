@@ -112,11 +112,11 @@ macro sqBind*(vm, body): untyped =
       for constDef in constSection:
         let constName = constDef[0]
         let constValue = constDef[2]
-        result.add(newCall(ident("sq_pushconsttable"), ident("v")))
-        result.add(newCall(ident("sq_pushstring"), ident("v"), newStrLitNode(constName.repr), newLit(-1)))
-        result.add(newCall(ident("pushValue"), ident("v"), constValue))
-        result.add(newNimNode(nnkDiscardStmt).add(newCall(ident("sq_newslot"), ident("v"), newLit(-3), newLit(SQTrue))))
-        result.add(newCall(ident("sq_pop"), ident("v"), newLit(1)))
+        result.add(newCall(ident("sq_pushconsttable"), vm))
+        result.add(newCall(ident("sq_pushstring"), vm, newStrLitNode(constName.repr), newLit(-1)))
+        result.add(newCall(ident("pushValue"), vm, constValue))
+        result.add(newNimNode(nnkDiscardStmt).add(newCall(ident("sq_newslot"), vm, newLit(-3), newLit(SQTrue))))
+        result.add(newCall(ident("sq_pop"), vm, newLit(1)))
     else:
       let procDef = bodyStmt
       let name = procDef[0]
@@ -164,7 +164,7 @@ macro sqBind*(vm, body): untyped =
       stmts.add(newLit(1))
       # create procedures
       let sqbdName = ident("sqbd_" & name.repr)
-      let regStmt = newCall(ident("regGblFun"), ident("v"), sqbdName, newLit(name.repr))
+      let regStmt = newCall(ident("regGblFun"), vm, sqbdName, newLit(name.repr))
       result.add(procDef)
       result.add(newProc(sqbdName, 
         [ident("SQInteger"), newIdentDefs(ident("v"), ident("HSQUIRRELVM"))],
