@@ -220,6 +220,7 @@ proc sqstd_writeclosuretofile*(v: HSQUIRRELVM, filename: cstring): SQRESULT {.im
 
 # aux
 proc sqstd_seterrorhandlers*(v: HSQUIRRELVM) {.importc: "sqstd_seterrorhandlers".}
+proc sqstd_printcallstack*(v: HSQUIRRELVM) {.importc: "sqstd_printcallstack".}
 
 # util
 proc printfunc*(v: HSQUIRRELVM, s: cstring) {.importc: "printfunc", cdecl, varargs.}
