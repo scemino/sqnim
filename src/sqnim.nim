@@ -30,7 +30,7 @@ proc currentSourceDir(): string {.compileTime.} =
 {.pragma: squirrel_header, header: "include/squirrel.h", header: "util.h".}
 
 type
-  SQObjectType* = uint
+  SQObjectType* = cuint
 
 const 
   RT_NULL*            =0x00000001
@@ -55,11 +55,11 @@ const
   SQOBJECT_NUMERIC        =0x04000000
   SQOBJECT_DELEGABLE      =0x02000000
   SQOBJECT_CANBEFALSE     =0x01000000
-  SQTrue* = true
-  SQFalse* = false
+  SQTrue* = 1.cuint
+  SQFalse* = 0.cuint
   SQ_OK* = 0
   SQ_ERROR* = -1
-  OT_NULL* =           (RT_NULL or SQOBJECT_CANBEFALSE).SQObjectType
+  OT_NULL* =           (RT_NULL or SQOBJECT_NUMERIC or SQOBJECT_CANBEFALSE).SQObjectType
   OT_INTEGER* =        (RT_INTEGER or SQOBJECT_NUMERIC or SQOBJECT_CANBEFALSE).SQObjectType
   OT_FLOAT* =          (RT_FLOAT or SQOBJECT_NUMERIC or SQOBJECT_CANBEFALSE).SQObjectType
   OT_BOOL* =           (RT_BOOL or SQOBJECT_CANBEFALSE).SQObjectType
@@ -90,7 +90,7 @@ type
   SQString* = cstring
   SQUnsignedInteger* = cuint
   SQRESULT* = cint
-  SQBool* = bool
+  SQBool* = cuint
   SQObjectValue* {.final, union, pure.} = object
     pTable*: pointer
     pArray*: pointer
@@ -175,15 +175,18 @@ proc sq_bindenv*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_binden
 proc sq_setclosureroot*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_setclosureroot".}
 proc sq_getclosureroot*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_getclosureroot".}
 proc sq_pushstring*(v: HSQUIRRELVM, s: cstring, len: SQInteger) {.importc: "sq_pushstring".}
-proc sq_pushfloat*(v: HSQUIRRELVM, f: float) {.importc: "sq_pushfloat".}
+proc sq_pushfloat*(v: HSQUIRRELVM, f: SQFloat) {.importc: "sq_pushfloat".}
 proc sq_pushinteger*(v: HSQUIRRELVM, n: SQInteger) {.importc: "sq_pushinteger".}
+proc sq_pushbool*(v: HSQUIRRELVM, b: SQBool) {.importc: "sq_pushbool".}
 proc sq_pushnull*(v: HSQUIRRELVM) {.importc: "sq_pushnull".}
 proc sq_pushthread*(v: HSQUIRRELVM, thread: HSQUIRRELVM) {.importc: "sq_pushthread".}
 proc sq_gettype*(v: HSQUIRRELVM, idx: SQInteger): SQObjectType {.importc: "sq_gettype".}
+proc sq_getsize*(v: HSQUIRRELVM, idx: SQInteger): SQInteger {.importc: "sq_getsize".}
 proc sq_getstring*(v: HSQUIRRELVM, idx: SQInteger, c: var cstring): SQRESULT {.importc: "sq_getstring".}
 proc sq_getinteger*(v: HSQUIRRELVM, idx: SQInteger, i: var SQInteger): SQRESULT {.importc: "sq_getinteger".}
 proc sq_getfloat*(v: HSQUIRRELVM, idx: SQInteger, i: var SQFloat): SQRESULT {.importc: "sq_getfloat".}
 proc sq_getclosureinfo*(v: HSQUIRRELVM, idx: SQInteger,nparams, nfreevars: var SQInteger): SQRESULT {.importc: "sq_getclosureinfo".}
+proc sq_getclosurename*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_getclosurename".}
 
 # object manipulation
 proc sq_pushroottable*(v: HSQUIRRELVM) {.importc: "sq_pushroottable".}
@@ -194,17 +197,23 @@ proc sq_setconsttable*(v: HSQUIRRELVM): SQRESULT {.importc: "sq_setconsttable".}
 proc sq_newslot*(v: HSQUIRRELVM, idx: SQInteger, bstatic: SQBool): SQRESULT {.importc: "sq_newslot".}
 proc sq_deleteslot*(v: HSQUIRRELVM, idx: SQInteger, pushval: SQBool): SQRESULT {.importc: "sq_deleteslot".}
 proc sq_get*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_get".}
+proc sq_rawget*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawget".}
+proc sq_rawset*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawset".}
+proc sq_arrayappend*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_arrayappend".}
 proc sq_next*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_next".}
 
 # calls
-proc sq_call*(v: HSQUIRRELVM, params: SQInteger, retval, raiseerror: bool): SQRESULT {.importc: "sq_call".}
+proc sq_call*(v: HSQUIRRELVM, params: SQInteger, retval, raiseerror: SQBool): SQRESULT {.importc: "sq_call".}
 proc sq_throwerror*(v: HSQUIRRELVM, err: cstring): SQRESULT {.importc: "sq_throwerror".}
 
 # raw object handling
 proc sq_getstackobj*(v: HSQUIRRELVM, idx: SQInteger, po: var HSQOBJECT): SQRESULT {.importc: "sq_getstackobj".}
 proc sq_pushobject*(v: HSQUIRRELVM, obj: HSQOBJECT) {.importc: "sq_pushobject".}
 proc sq_addref*(v: HSQUIRRELVM, po: var HSQOBJECT) {.importc: "sq_addref".}
+proc sq_release*(v: HSQUIRRELVM, po: var HSQOBJECT): SQBool {.importc: "sq_release".}
+proc sq_getrefcount*(v: HSQUIRRELVM, po: var HSQOBJECT): SQUnsignedInteger {.importc: "sq_getrefcount".}
 proc sq_resetobject*(po: var HSQOBJECT) {.importc: "sq_resetobject".}
+proc sq_objtostring*(o: var HSQOBJECT): SQString {.importc: "sq_objtostring".}
 
 # register methods
 proc sqstd_register_bloblib*(v: HSQUIRRELVM) {.importc: "sqstd_register_bloblib".}
@@ -214,8 +223,8 @@ proc sqstd_register_stringlib*(v: HSQUIRRELVM) {.importc: "sqstd_register_string
 proc sqstd_register_systemlib*(v: HSQUIRRELVM) {.importc: "sqstd_register_systemlib".}
 
 # compiler helpers
-proc sqstd_loadfile*(v: HSQUIRRELVM, filename: cstring, printerror: bool): SQRESULT {.importc: "sqstd_loadfile".}
-proc sqstd_dofile*(v: HSQUIRRELVM, filename: cstring, retval, printerror: bool): SQRESULT {.importc: "sqstd_dofile".}
+proc sqstd_loadfile*(v: HSQUIRRELVM, filename: cstring, printerror: SQBool): SQRESULT {.importc: "sqstd_loadfile".}
+proc sqstd_dofile*(v: HSQUIRRELVM, filename: cstring, retval, printerror: SQBool): SQRESULT {.importc: "sqstd_dofile".}
 proc sqstd_writeclosuretofile*(v: HSQUIRRELVM, filename: cstring): SQRESULT {.importc: "sqstd_writeclosuretofile".}
 
 # aux
@@ -228,4 +237,14 @@ proc printfunc*(v: HSQUIRRELVM, s: cstring) {.importc: "printfunc", cdecl, varar
 proc SQ_FAILED*(res: SQInteger): bool {.inline.} = res < 0
 proc SQ_SUCCEEDED*(res: SQInteger): bool {.inline.} = res >= 0
 
-include sqnim/util
+converter toSQBool*(b: bool): SQBool =
+  if b: SQTrue else: SQFalse
+
+converter toSQInteger*(i: int): SQInteger =
+  i.SQInteger
+
+converter toSQFloat*(i: float): SQFloat =
+  i.SQFloat
+
+converter toSQString*(s: string): SQString =
+  s.SQString

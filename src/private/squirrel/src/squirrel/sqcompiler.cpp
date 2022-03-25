@@ -843,7 +843,7 @@ public:
             Lex();ParseTableOrClass(_SC(','),_SC('}'));
             break;
         case TK_FUNCTION: FunctionExp();break;
-        case _SC('@'): FunctionExp(true);break;
+        case _SC('@'): FunctionExp();break;
         case TK_CLASS: Lex(); ClassExp();break;
         case _SC('-'):
             Lex();
@@ -1046,7 +1046,7 @@ public:
 				boundtarget = ParseBindEnv();
 			}
             Expect(_SC('('));
-            CreateFunction(varname,0xFF,false);
+            CreateFunction(varname,0xFF);
             _fs->AddInstruction(_OP_CLOSURE, _fs->PushTarget(), _fs->_functions.size() - 1, boundtarget);
             _fs->PopTarget();
             _fs->PushLocalVariable(varname);
@@ -1156,12 +1156,19 @@ public:
         BEGIN_SCOPE();
         Statement();
         END_SCOPE();
-        Expect(TK_WHILE);
-        SQInteger continuetrg = _fs->GetCurrentPos();
-        Expect(_SC('(')); CommaExpr(); Expect(_SC(')'));
-        _fs->AddInstruction(_OP_JZ, _fs->PopTarget(), 1);
-        _fs->AddInstruction(_OP_JMP, 0, jmptrg - _fs->GetCurrentPos() - 1);
-        END_BREAKBLE_BLOCK(continuetrg);
+        if(_token == TK_WHILE) {
+            Expect(TK_WHILE);
+            SQInteger continuetrg = _fs->GetCurrentPos();
+            Expect(_SC('(')); CommaExpr(); Expect(_SC(')'));
+            _fs->AddInstruction(_OP_JZ, _fs->PopTarget(), 1);
+            _fs->AddInstruction(_OP_JMP, 0, jmptrg - _fs->GetCurrentPos() - 1);
+            END_BREAKBLE_BLOCK(continuetrg);
+        } else {
+            SQInteger continuetrg = _fs->GetCurrentPos();
+            _fs->AddInstruction(_OP_JZ, 1, 1);
+            _fs->AddInstruction(_OP_JMP, 0, jmptrg - _fs->GetCurrentPos() - 1);
+            END_BREAKBLE_BLOCK(continuetrg);
+        }
     }
     void ForStatement()
     {
@@ -1460,7 +1467,7 @@ public:
 		Expect(_SC(']'));
 		return boundtarget;
 	}
-    void FunctionExp(bool lambda = false)
+    void FunctionExp()
     {
         Lex(); 
 		SQInteger boundtarget = 0xFF;
@@ -1469,7 +1476,7 @@ public:
 		}
 		Expect(_SC('('));
         SQObjectPtr dummy;
-        CreateFunction(dummy, boundtarget, lambda);
+        CreateFunction(dummy, boundtarget);
         _fs->AddInstruction(_OP_CLOSURE, _fs->PushTarget(), _fs->_functions.size() - 1, boundtarget);
     }
     void ClassExp()
@@ -1535,7 +1542,7 @@ public:
         }
         _es = es;
     }
-    void CreateFunction(SQObject &name,SQInteger boundtarget,bool lambda = false)
+    void CreateFunction(SQObject &name,SQInteger boundtarget)
     {
         SQFuncState *funcstate = _fs->PushChildState(_ss(_vm));
         funcstate->_name = name;
@@ -1578,12 +1585,7 @@ public:
 
         SQFuncState *currchunk = _fs;
         _fs = funcstate;
-        if(lambda) {
-            Expression();
-            _fs->AddInstruction(_OP_RETURN, 1, _fs->PopTarget());}
-        else {
-            Statement(false);
-        }
+        Statement(false);
         funcstate->AddLineInfos(_lex._prevtoken == _SC('\n')?_lex._lasttokenline:_lex._currentline, _lineinfo, true);
         funcstate->AddInstruction(_OP_RETURN, -1);
         funcstate->SetStackSize(0);

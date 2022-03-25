@@ -2,6 +2,25 @@ import unittest
 import sqnim
 import std/[math, tables]
 
+proc execute(v: HSQUIRRELVM; code: string; name = "Script"; raiseError = true): HSQOBJECT =
+  sq_resetobject(result)
+  var top = sq_gettop(v)
+  # compile
+  sq_pushroottable(v)
+  if SQ_FAILED(sq_compilebuffer(v, code.cstring, code.len, name, raiseError)):
+    echo "Error executing code " & code
+    sq_settop(v, top)
+    return
+  sq_push(v, -2)
+  # call
+  if SQ_FAILED(sq_call(v, 1, SQTrue, raiseError)):
+    echo "Error calling code " & code
+    sq_settop(v, top)
+    return
+  discard sq_getstackobj(v, -1, result)
+  sq_addref(v, result)
+  sq_settop(v, top)
+
 test "test simple data":
   let v = sq_open(1024)
 
@@ -26,6 +45,9 @@ test "test simple data":
   discard sq_getstring(v, -1, s)
   doAssert $s == "Foo"
   sq_pop(v, 1)
+
+  result = execute(v, """return "Foo"""")
+  doAssert sq_objtostring(result) == "Foo"
 
   # array
   result = execute(v, "return [3, 2, 1]")
@@ -74,7 +96,7 @@ test "test simple data":
   discard sq_getclosureinfo(v, -1, nparams, nfreevars)
 
   sq_pushroottable(v)
-  discard sq_call(v, nparams, true, true)
+  discard sq_call(v, nparams, SQTrue, SQTrue)
   var funcResult: int
   discard sq_getinteger(v, -1, funcResult)
   sq_pop(v, 2)
@@ -83,44 +105,5 @@ test "test simple data":
   doAssert nfreevars == 0
   doAssert funcResult == 42
   doAssert sq_gettop(v) == 0
-
-  sq_close(v)
-
-test "test bindings":
-  let v = sq_open(1024)
-  v.sqBind:
-    const
-      ANSWERTOUNIVERSE = 42
-      YES = 1
-      NO = 0
-
-    proc add(x: SQInteger, y: SQInteger): SQInteger =
-      x + y
-
-    proc addStr(x: SQString, y: SQString): SQString =
-      ($x & $y).SQString
-
-  var result = execute(v, "return add(1, 1)")
-  doAssert sq_isinteger(result)
-  sq_pushroottable(v)
-  sq_pushobject(v, result)
-  var i: SQInteger
-  discard sq_getinteger(v, -1, i)
-  doAssert i == 2
-
-  result = execute(v, """return addStr("hello ", "world")""")
-  doAssert sq_isstring(result)
-  sq_pushroottable(v)
-  sq_pushobject(v, result)
-  var s: SQString
-  discard sq_getstring(v, -1, s)
-  doAssert s == "hello world"
-
-  result = execute(v, "return ANSWERTOUNIVERSE")
-  doAssert sq_isinteger(result)
-  sq_pushroottable(v)
-  sq_pushobject(v, result)
-  discard sq_getinteger(v, -1, i)
-  doAssert i == 42
 
   sq_close(v)
