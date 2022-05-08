@@ -150,9 +150,6 @@ public:
     void OptionalSemicolon()
     {
         if(_token == _SC(';')) { Lex(); return; }
-        if(!IsEndOfStatement()) {
-            Error(_SC("end of statement expected (; or lf)"));
-        }
     }
     void MoveIfCurrentTargetIsLocal() {
         SQInteger trg = _fs->TopTarget();

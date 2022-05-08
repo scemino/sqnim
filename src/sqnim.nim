@@ -214,6 +214,9 @@ proc sq_release*(v: HSQUIRRELVM, po: var HSQOBJECT): SQBool {.importc: "sq_relea
 proc sq_getrefcount*(v: HSQUIRRELVM, po: var HSQOBJECT): SQUnsignedInteger {.importc: "sq_getrefcount".}
 proc sq_resetobject*(po: var HSQOBJECT) {.importc: "sq_resetobject".}
 proc sq_objtostring*(o: var HSQOBJECT): SQString {.importc: "sq_objtostring".}
+proc sq_objtointeger*(o: var HSQOBJECT): SQInteger {.importc: "sq_objtointeger".}
+proc sq_objtofloat*(o: var HSQOBJECT): SQFloat {.importc: "sq_objtofloat".}
+proc sq_getvmrefcount*(v: HSQUIRRELVM, o: var HSQOBJECT): SQUnsignedInteger {.importc: "sq_getvmrefcount".}
 
 # register methods
 proc sqstd_register_bloblib*(v: HSQUIRRELVM) {.importc: "sqstd_register_bloblib".}
