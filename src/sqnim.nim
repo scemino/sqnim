@@ -200,6 +200,7 @@ proc sq_get*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_get".}
 proc sq_rawget*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawget".}
 proc sq_rawset*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawset".}
 proc sq_arrayappend*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_arrayappend".}
+proc sq_clone*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_clone".}
 proc sq_next*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_next".}
 
 # calls
