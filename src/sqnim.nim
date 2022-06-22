@@ -200,6 +200,8 @@ proc sq_get*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_get".}
 proc sq_rawget*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawget".}
 proc sq_rawset*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_rawset".}
 proc sq_arrayappend*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_arrayappend".}
+proc sq_setdelegate*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_setdelegate".}
+proc sq_getdelegate*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_getdelegate".}
 proc sq_clone*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_clone".}
 proc sq_next*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_next".}
 
