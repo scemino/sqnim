@@ -91,6 +91,8 @@ test "test simple data":
   result = execute(v, "return function() {return 42}")
   doAssert sq_isclosure(result)
   doAssert result.objType == OT_CLOSURE
+  doAssert closure_srcname(result) == "Script"
+  doAssert closure_line(result) == 1
   sq_pushobject(v, result)
   var nparams, nfreevars: SQInteger
   discard sq_getclosureinfo(v, -1, nparams, nfreevars)

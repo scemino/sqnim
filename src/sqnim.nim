@@ -239,6 +239,8 @@ proc sqstd_printcallstack*(v: HSQUIRRELVM) {.importc: "sqstd_printcallstack".}
 
 # util
 proc printfunc*(v: HSQUIRRELVM, s: cstring) {.importc: "printfunc", cdecl, varargs.}
+proc closure_srcname*(obj: HSQOBJECT): cstring {.importc: "closure_srcname", cdecl.}
+proc closure_line*(obj: HSQOBJECT): SQInteger {.importc: "closure_line", cdecl.}
 
 proc SQ_FAILED*(res: SQInteger): bool {.inline.} = res < 0
 proc SQ_SUCCEEDED*(res: SQInteger): bool {.inline.} = res >= 0
