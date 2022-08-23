@@ -80,6 +80,7 @@ const
 
 type
   PrintCallback = proc (v: HSQUIRRELVM, s: cstring) {.cdecl, varargs.}
+  PrintExCallback = proc (v: HSQUIRRELVM, message: cstring) {.cdecl.}
   SQFUNCTION* = proc (v: HSQUIRRELVM): SQInteger {.cdecl.}
   SQCOMPILERERROR* = proc (v: HSQUIRRELVM, desc: SQString, source: SQString, line: SQInteger, column: SQInteger) {.cdecl.}
   SQLEXREADFUNC* = proc (p: SQUserPointer): SQInteger {.cdecl.}
@@ -241,6 +242,7 @@ proc sqstd_printcallstack*(v: HSQUIRRELVM) {.importc: "sqstd_printcallstack".}
 proc printfunc*(v: HSQUIRRELVM, s: cstring) {.importc: "printfunc", cdecl, varargs.}
 proc closure_srcname*(obj: HSQOBJECT): cstring {.importc: "closure_srcname", cdecl.}
 proc closure_line*(obj: HSQOBJECT): SQInteger {.importc: "closure_line", cdecl.}
+proc setprintfunc*(v: HSQUIRRELVM, printfunc, errfunc: PrintExCallback) {.importc: "setprintfunc", cdecl.}
 
 proc SQ_FAILED*(res: SQInteger): bool {.inline.} = res < 0
 proc SQ_SUCCEEDED*(res: SQInteger): bool {.inline.} = res >= 0

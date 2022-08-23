@@ -4,7 +4,10 @@
 extern "C" {
 #endif
 
-void printfunc(HSQUIRRELVM v,const SQChar *s,...);
+typedef void (*SQPRINTEXFUNCTION)(HSQUIRRELVM,const SQChar * );
+
+void printfunc(HSQUIRRELVM v, const SQChar *s, ...);
+void setprintfunc(HSQUIRRELVM v, SQPRINTEXFUNCTION printfunc, SQPRINTEXFUNCTION errfunc);
 
 #ifdef __cplusplus
 }
