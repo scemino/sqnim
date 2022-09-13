@@ -115,6 +115,11 @@ type
   HSQOBJECT* = object
     objType*: SQObjectType
     value*: SQObjectValue
+  SQStackInfos* = object
+    funcname*: cstring
+    source*: cstring
+    line*: SQInteger
+  SQDEBUGHOOK* = proc (v: HSQUIRRELVM, t: SQInteger, sourcename: cstring, line: SQInteger, funcname: cstring) {.cdecl.}
 
 # UTILITY
 proc sq_isnumeric*(o: HSQOBJECT): bool {.inline.} = (o.objType and SQOBJECT_NUMERIC) == SQOBJECT_NUMERIC
@@ -221,6 +226,11 @@ proc sq_objtostring*(o: var HSQOBJECT): SQString {.importc: "sq_objtostring".}
 proc sq_objtointeger*(o: var HSQOBJECT): SQInteger {.importc: "sq_objtointeger".}
 proc sq_objtofloat*(o: var HSQOBJECT): SQFloat {.importc: "sq_objtofloat".}
 proc sq_getvmrefcount*(v: HSQUIRRELVM, o: var HSQOBJECT): SQUnsignedInteger {.importc: "sq_getvmrefcount".}
+
+# debug
+proc sq_stackinfos*(v: HSQUIRRELVM, level: SQInteger, si: var SQStackInfos): SQRESULT {.importc: "sq_stackinfos".}
+proc sq_setdebughook*(v: HSQUIRRELVM) {.importc: "sq_setdebughook".}
+proc sq_setnativedebughook*(v: HSQUIRRELVM, hook: SQDEBUGHOOK) {.importc: "sq_setnativedebughook".}
 
 # register methods
 proc sqstd_register_bloblib*(v: HSQUIRRELVM) {.importc: "sqstd_register_bloblib".}
