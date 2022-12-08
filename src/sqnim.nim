@@ -193,6 +193,7 @@ proc sq_getinteger*(v: HSQUIRRELVM, idx: SQInteger, i: var SQInteger): SQRESULT 
 proc sq_getfloat*(v: HSQUIRRELVM, idx: SQInteger, i: var SQFloat): SQRESULT {.importc: "sq_getfloat".}
 proc sq_getclosureinfo*(v: HSQUIRRELVM, idx: SQInteger,nparams, nfreevars: var SQInteger): SQRESULT {.importc: "sq_getclosureinfo".}
 proc sq_getclosurename*(v: HSQUIRRELVM, idx: SQInteger): SQRESULT {.importc: "sq_getclosurename".}
+proc sq_setnativeclosurename*(v: HSQUIRRELVM, idx: SQInteger, name: cstring): SQRESULT {.importc: "sq_setnativeclosurename".}
 
 # object manipulation
 proc sq_pushroottable*(v: HSQUIRRELVM) {.importc: "sq_pushroottable".}
